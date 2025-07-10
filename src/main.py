@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 from block_markdown import extract_title,markdown_to_html_node
 
@@ -12,18 +13,26 @@ Backend developers have to be extra careful about file safety even when they can
 
 
 """
+
+if len(sys.argv) > 1:
+    basepath = sys.argv[1]
+else:
+    basepath = "/"
+
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 MAIN_DIR = os.path.dirname(SCRIPT_DIR)
 CONTENT_DIR = os.path.join(MAIN_DIR,"content")
 
+
 def delete_public_directory():
-    path = os.path.join(MAIN_DIR,"public")
+    path = os.path.join(MAIN_DIR,"docs")
     if os.path.exists(path):
         shutil.rmtree(path)
 
 def copy_static_to_public():
     static = os.path.join(MAIN_DIR,"static")
-    public = os.path.join(MAIN_DIR,"public")
+    public = os.path.join(MAIN_DIR,"docs")
     shutil.copytree(static,public)
 
 def list_all_filepaths_in_folder(folder):
@@ -44,25 +53,17 @@ def list_all_md_files_in_dir(dir):
     return returned
 
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_all_pages(dir_path_content, template_path, dest_dir_path, basepath):
     old_filepaths = list_all_md_files_in_dir(dir_path_content)
 
     for md_path in old_filepaths:
         rel_path = os.path.relpath(md_path, CONTENT_DIR)
         html_rel_path = rel_path[:-3] + ".html"
         dest_path = os.path.join(dest_dir_path, html_rel_path)
-        print(f"md_path={md_path}")
-        print("\n")
-        print(f"rel_path={rel_path}")
-        print("\n")
-        print(f"html_rel_path={html_rel_path}")
-        print("\n")
-        print(f"dest_path={dest_path}")
-        print("\n")
-        generate_page(md_path, template_path, dest_path)
+        generate_page(md_path, template_path, dest_path, basepath)
     
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath):
     #init
     source_html_title = ""
     source_html_content = ""
@@ -78,7 +79,9 @@ def generate_page(from_path, template_path, dest_path):
         template = n.read()
 
     template = template.replace("{{ Title }}", source_html_title)
-    template = template.replace("{{ Content }}", source_html_content)
+    template = template.replace("{{ Content }}", source_html_content) # 'src="/',f'src="{basepath}'
+    template = template.replace('href="/',f'href="{basepath}')
+    template = template.replace('src="/',f'src="{basepath}')
 
     dest_dir_path = os.path.dirname(dest_path)
     if dest_dir_path != "":
@@ -86,12 +89,12 @@ def generate_page(from_path, template_path, dest_path):
 
     with open(dest_path, 'w') as output:
         output.write(template)
-    
 
-def main():
+
+def main(basepath):
     delete_public_directory()
     copy_static_to_public()
-    generate_pages_recursive(os.path.join(MAIN_DIR,"content"),os.path.join(MAIN_DIR,"template.html"),os.path.join(MAIN_DIR,"public"))
+    generate_all_pages(os.path.join(MAIN_DIR,"content"),os.path.join(MAIN_DIR,"template.html"),os.path.join(MAIN_DIR,"docs"),basepath)
 
 if __name__ == "__main__":
-    main()
+    main(basepath)
