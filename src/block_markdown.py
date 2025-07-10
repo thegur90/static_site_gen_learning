@@ -96,7 +96,7 @@ def markdown_to_html_node(markdown):
                 return list(map(lambda n: text_node_to_html_node(n),text_to_textnodes(raw_string)))
             
             if type == BlockType.QUOTE:
-                raw_string = block[1:].replace("\n"," ")
+                raw_string = block[1:].replace("\n"," ").replace(">","").strip()
                 return list(map(lambda n: text_node_to_html_node(n),text_to_textnodes(raw_string)))
             
             if type == BlockType.HEADING:
@@ -132,3 +132,10 @@ def markdown_to_html_node(markdown):
         children.append(block_to_parent_node(entry,entry_type))
 
     return ParentNode("div",children,None)
+
+def extract_title(markdown_doc):
+    block_list = markdown_to_blocks(markdown_doc)
+    for entry in block_list:
+        if entry.strip().startswith("# "):
+            return entry.strip()[2:].strip()
+    raise Exception ("Missing h1 header in argument - markdown_doc")

@@ -47,5 +47,8 @@ This is the same paragraph on a new line
         block = "paragraph"
         self.assertEqual(block_to_block_type(block), BlockType.PARAGRAPH)
 
+    def test_extract_title(self):
+        pass
+
 
 
